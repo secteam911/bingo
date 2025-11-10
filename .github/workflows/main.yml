@@ -1,0 +1,49 @@
+name: Build Windows Package
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]  # Adjust as needed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Upgrade pip, build, and twine
+        run: |
+          py -m pip install --upgrade pip
+          py -m pip install build twine
+
+      - name: Build package
+        run: |
+          py -m build
+
+      - name: Verify build output
+        run: |
+          dir dist
+
+      - name: Check package with twine (optional)
+        run: |
+          py -m twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows-py${{ matrix.python-version }}
+          path: dist/*
+          if-no-files-found: error
