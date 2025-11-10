@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bingo"
+version = "0.1.0"
+description = "My first ever python package"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "secteam", email = "secteam@horizon.com"}]
+keywords = ["machine-learning", "bigdata", "ai", "bingo"]
+
+[project.urls]
+Homepage = "https://github.com/secteam911/bingo"
+Repository = "https://github.com/secteam911/bingo"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+"shellcode_runner" = ["*.pyi"]
