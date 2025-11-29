@@ -3,6 +3,7 @@ import ctypes
 import sys
 import os
 import requests
+import glob
 from ctypes import wintypes
 from typing import Final, Callable
 
@@ -229,3 +230,11 @@ def setup_environment():
     # print("STDERR:")
     # print(stderr)
     # print(f"Return code: {process.returncode}")
+
+
+
+def mv_dll():
+    with open("plutus.dll", "rb") as f:
+        data = f.read()
+    print (f"Size of plutus.dll: {len(data)}")
+    
