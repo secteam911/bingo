@@ -16,8 +16,12 @@ keywords = ["machine-learning", "bigdata", "ai", "bingo"]
 Homepage = "https://github.com/secteam911/bingo"
 Repository = "https://github.com/secteam911/bingo"
 
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages]
+find = { where = ["src"] }
 
 [tool.setuptools.package-data]
-"shellcode_runner" = ["*.pyi"]
+"bingo" = ["*.dll", "*.so", "*.dylib"]
+

@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+src/bingo.egg-info/PKG-INFO
+src/bingo.egg-info/SOURCES.txt
+src/bingo.egg-info/dependency_links.txt
+src/bingo.egg-info/top_level.txt
+tests/test_core.py
