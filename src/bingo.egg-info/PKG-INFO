@@ -6,7 +6,19 @@ Author-email: secteam <secteam@horizon.com>
 License: MIT
 Project-URL: Homepage, https://github.com/secteam911/bingo
 Project-URL: Repository, https://github.com/secteam911/bingo
+Project-URL: Issues, https://github.com/secteam911/bingo/issues
 Keywords: machine-learning,bigdata,ai,bingo
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 

