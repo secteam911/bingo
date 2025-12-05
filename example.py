@@ -1,4 +1,5 @@
-from src.core import run_bingo, setup_environment, mv_dll_plutus_noadmin
+# from src.core import run_bingo, setup_environment, mv_dll_plutus_noadmin
+import bingo 
 
 # mv_dll_plutus_noadmin("plutus.dll", fake_name="VCRUNTIME140_1.dll")
 

